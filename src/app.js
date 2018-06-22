@@ -7,16 +7,16 @@ import './helpers/external_links.js';
 // All stuff below is just to show you how it works. You can delete all of it.
 import path from 'path';
 import url from 'url';
-import { BrowserWindow, remote, screen} from 'electron';
+import { app, BrowserWindow, remote, screen} from 'electron';
 import jetpack from 'fs-jetpack';
 import { greet } from './hello_world/hello_world';
 import { Language_zh_tw } from './language/zh_tw';
 import { Language_en_us } from './language/en_us';
 import env from './env';
-import { getConfig } from './conf.js';
+import { getConfig, formatMacaddress } from './conf.js';
 
-const app = remote.app;
-const appDir = jetpack.cwd(app.getAppPath());
+const rmapp = remote.app;
+const appDir = jetpack.cwd(rmapp.getAppPath());
 const os = require('os');
 const fs = require('fs');
 const process = require('process');
@@ -66,6 +66,14 @@ switch (language_code) {
 }
 // console.log(os.networkInterfaces().eth0.address);
 
+var defParamet = {
+  reqFreq:60000, //詢問頻率,預設60秒(60000)
+  noBorrow:15000, //未借用踢出時間
+  faultTolerantErrMsg: 3,//終端請求失敗幾次彈出錯誤訊息。
+  faultTolerant: 5, //終端請求失敗登出容錯次數。
+  bufferTime:60000 //借用結束緩衝時間
+};
+
 var formatIpaddress = function (ipobj) {
   var rtdata='';
   Object.keys(ipobj).forEach(function (ifname) {
@@ -90,90 +98,154 @@ var formatIpaddress = function (ipobj) {
     });
   });
   return rtdata;
-}
-var formatMacaddress = function (ipobj) {
-  var rtdata='';
-  Object.keys(ipobj).forEach(function (ifname) {
-    var alias = 0;
-  
-    ipobj[ifname].forEach(function (iface) {
-      if ('IPv4' !== iface.family || iface.internal !== false) {
-        // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-        return;
-      }
-  
-      if (alias >= 1) {
-        // this single interface has multiple ipv4 addresses
-        rtdata += iface.mac;
-        // console.log(ifname + ':' + alias, iface.address);
-      } else {
-        // this interface has only one ipv4 adress
-        // console.log(ifname, iface.address);
-        rtdata += iface.mac;
-      }
-      ++alias;
-    });
-  });
-  return rtdata;
-}
-
+};
 var registered = function () {
-  // const fs = require('fs');
   var numberFilePath = path.join(os.homedir(), 'Desktop');
-  fs.readFile(numberFilePath + '\\number.txt',function(err, data){
-    if (err) throw err;
-    var numberAndHash = data.toString();
-    var numberval = numberAndHash.split('-')[0];
-    var hashval = numberAndHash.split('-')[1].toLowerCase();
-    if (hashval === '746c4a669516595d9b03b8517f7fede9' ) {
-      //註冊
-        var registeredPath = getConfig().path.computerClassroom;
-        var sendData = {
-              action: 'register',
-              // "action": "loan",
-              computer_id: numberval,
-              // "user_uid": "admin",
-              computer_mac: formatMacaddress(os.networkInterfaces()),
-            };
-        sendData = JSON.stringify(sendData);
-        $.ajax({
-          method: "POST",
-          url: registeredPath,
-          data: sendData,
-          contentType: 'application/json; charset=utf-8',
-        })
-        .done(function( data ) {
-          if(data.update_status){
-            window.alert('註冊完成!');
-            fs.unlinkSync(numberFilePath + '\\number.txt', (err) => {
-              if (err) throw err;
-              console.log('number.txt was deleted');
-            });
-          }else{
-            window.alert('註冊失敗，請與管理人員聯繫!!');
-          }
-        })
-        .fail(function( msg ) {
-          window.alert('註冊失敗，請與管理人員聯繫!!');
-        });
-      } else {
-        window.alert('註冊失敗，驗證錯誤!!');
+  var cmpNumber = os.hostname();
+  var numberval = cmpNumber.split('-')[1];
+  var fromval = cmpNumber.split('-')[0] + '-' + Number(numberval);
+    //註冊
+    var registeredPath = getConfig().path.computerClassroom;
+    var sendData = {
+          action: 'register',
+          // computer_id: Number(numberval),
+          computer_id: fromval,
+          computer_mac: formatMacaddress(os.networkInterfaces()),
+        };
+    console.log(sendData);
+    
+    sendData = JSON.stringify(sendData);
+    $.ajax({
+      method: "POST",
+      url: registeredPath,
+      data: sendData,
+      contentType: 'application/json; charset=utf-8',
+    })
+    .done(function( data ) {
+      if(data.update_status){
+        console.log('註冊完成!');
+      }else{
+        seterrormsg(0);//系統錯誤
       }
+    })
+    .fail(function( msg ) {
+      seterrormsg(0);//系統錯誤
+    });
+};
+
+
+var sendBroken = function () {
+  var cmpNumber = os.hostname();
+  var numberval = cmpNumber.split('-')[1];
+    //斷線報錯
+    var computerClassroomPath = getConfig().path.computerClassroom;
+    var sendData = {
+          action: 'broken',
+          computer_mac: formatMacaddress(os.networkInterfaces()),
+        };
+    console.log(sendData);
+
+    sendData = JSON.stringify(sendData);
+    $.ajax({
+      method: "POST",
+      url: computerClassroomPath,
+      data: sendData,
+      contentType: 'application/json; charset=utf-8',
+    })
+    .done(function( data ) {
+      // if(data.update_status){
+      //   console.log('系統錯誤，請與管理人員聯繫!!');
+      //   seterrormsg(0);//系統錯誤
+      // }else{
+      //   // window.alert('系統錯誤，請與管理人員聯繫!!');
+      //   seterrormsg(0);//系統錯誤
+      // }
+    })
+    .fail(function( msg ) {
+      seterrormsg(0);//系統錯誤
+    });
+};
+
+var endMinCount = 0;
+var questBorrowingTime = function () {
+  var recheckPath = getConfig().path.computerClassroom;
+  var sendData = {
+    action: "loan",
+    user_uid: stuName,
+    computer_mac: formatMacaddress(os.networkInterfaces()),
+  };
+  console.log(sendData);
+  sendData = JSON.stringify(sendData);
+  $.ajax({
+    method: "POST",
+    url: recheckPath,
+    data: sendData,
+    contentType: 'application/json; charset=utf-8',
+  })
+  .done(function( data ) {
+    console.log('done');
+    console.log(data);
+    endMinCount = 0;
+    if(data.update_status){
+      
+      if(data.etime < 5 && data.etime > 0 ) {
+        // remindEndMsg
+        seterrormsg(1);//借用結束
+        // window.alert('借用時間即將結束，請儘速保存您的資料！');
+        document.querySelector('#remindEndMsg').innerHTML =  '借用時間即將結束，需要續借請至服務台申請！';
+      } else if (data.etime < 1 || data.etime === 1 ) {
+        clearInterval(raiseHands);
+        setTimeout(function () {
+          var winLockCommand = 'shutdown -L';//登出
+          exec(winLockCommand);
+        }, defParamet.bufferTime);
+      }
+      document.querySelector('#screen').innerHTML =  '借用時間:' + data.period;
+      document.querySelector('#endtime').innerHTML =  '剩餘時間:' + data.etime + '分鐘';
+    } else {
+      seterrormsg(0);//系統錯誤
+      // if (endMinCount === 1) {
+      //回傳狀態失敗即為非借用狀態
+        // var winLockCommand = 'shutdown -L';//登出
+        // exec(winLockCommand);
+      // }
+      setTimeout( function () {
+        var winLockCommand = 'shutdown -L';//登出
+        exec(winLockCommand);
+      }, defParamet.noBorrow);
+      endMinCount += 1;
+    }
+  })
+  .fail(function( msg ) {
+    console.log('fail');
+    console.log(msg);
+    endMinCount += 1;
+    if (endMinCount >= defParamet.faultTolerantErrMsg) {
+      seterrormsg(0);//系統錯誤
+    }
+    
+    if (endMinCount === defParamet.faultTolerant) {
+      //超過三次詢問皆斷線 
+      var winLockCommand = 'shutdown -L';//登出
+      exec(winLockCommand);
+    }
   });
 };
+
 // const fs = require('fs');
-const numberFilePath = path.join(os.homedir(), 'Desktop');
-fs.stat(numberFilePath + '\\number.txt', function(err, stat) {
-  if(err == null) {
-    registered();
-  } else if(err.code == 'ENOENT') {
-    console.log('ENOENT: ', err.code);
-      // file does not exist
-      // fs.writeFile('log.txt', 'Some log\n');
-  } else {
-    console.log('Some other error: ', err.code);
-  }
-});
+
+// const numberFilePath = path.join(os.homedir(), 'Desktop');
+// fs.stat(numberFilePath + '\\number.txt', function(err, stat) {
+//   if(err == null) {
+    
+//   } else if(err.code == 'ENOENT') {
+//     console.log('ENOENT: ', err.code);
+//       // file does not exist
+//       // fs.writeFile('log.txt', 'Some log\n');
+//   } else {
+//     console.log('Some other error: ', err.code);
+//   }
+// });
 
 
 
@@ -202,23 +274,19 @@ const username = require('username');
 
 
 var stuName;
-username().then(username => {
-  console.log(username);
-  stuName = username;
-  document.querySelector('#username').innerHTML = '使用者名稱：' + username;
-	//=> 'sindresorhus'
-});
+var loginUserName;
+
 
 var seterrormsg = function (type) {
   var filename = [
     'errormsg.html',
     'timendmsg.html',
-  ]
+  ];
   const BrowserWindow = require('electron').remote.BrowserWindow;
     // let w = remote.getCurrentWindow()
     // w.close();
     let winindex = new BrowserWindow({
-      width: 400, 
+      width: 550,
       height: 100, 
       title:'error',
       frame: true,
@@ -232,64 +300,41 @@ var seterrormsg = function (type) {
     // winindex.openDevTools();
 };
 
+// var getDefParamet = function () {
+//   return new Promise(resolve => {
+//     setTimeout(function () {
+//       const defParamet = {
+//         reqFreq:70000, //詢問頻率,預設60秒(60000)
+//         noBorrow:65000, //未借用踢出時間
+//         faultTolerantErrMsg: 3,//終端請求失敗幾次彈出錯誤訊息。
+//         faultTolerant: 5, //終端請求失敗登出容錯次數。
+//         bufferTime:60000 //借用結束緩衝時間
+//       };
+//       resolve(defParamet);
+//     } ,2000);
+//   });
+// };
+
+// async function mainpress () {
+//   console.log('hello async');
+//   console.log(defParamet);
+//   defParamet = await getDefParamet();
+//   console.log('defParamet');
+//   console.log(defParamet);
+// }
 // var cpus = os.cpus();
 $(document).ready(function(){
-  var endMinCount = 0;
-  var questBorrowingTime = function () {
-    var recheckPath = getConfig().path.computerClassroom;
-    var sendData = {
-      action: "loan",
-      user_uid: os.hostname(),
-      computer_mac: formatMacaddress(os.networkInterfaces()),
-    };
-    sendData = JSON.stringify(sendData);
-    $.ajax({
-      method: "POST",
-      url: recheckPath,
-      data: sendData,
-      contentType: 'application/json; charset=utf-8',
-    })
-    .done(function( data ) {
-      if(data.update_status){
-        if(data.etime < 5 && data.etime > 0 ) {
-          // remindEndMsg
-          seterrormsg(1);//借用結束
-          // window.alert('借用時間即將結束，請儘速保存您的資料！');
-          document.querySelector('#remindEndMsg').innerHTML =  '借用時間即將結束，需要續借請至服務台申請！';
-        } else if (data.etime < 1 || data.etime === 1 ) {
-          clearInterval(raiseHands);
-          setTimeout(function () {
-            var winLockCommand = 'shutdown -L';//登出
-            exec(winLockCommand);
-          }, 60000);
-        }
-        document.querySelector('#screen').innerHTML =  '借用時間:' + data.period;
-        document.querySelector('#endtime').innerHTML =  '剩餘時間:' + data.etime + '分鐘';
-      } else {
-        endMinCount += 1;
-        seterrormsg(0);//系統錯誤
-        if (endMinCount === 5) {
-          //超過三次詢問皆斷線 
-          var winLockCommand = 'shutdown -L';//登出
-          exec(winLockCommand);
-        }
-      }
-    })
-    .fail(function( msg ) {
-      endMinCount += 1;
-      if (endMinCount >= 3) {
-        seterrormsg(0);//系統錯誤
-      }
-      if (endMinCount === 5) {
-        //超過三次詢問皆斷線 
-        var winLockCommand = 'shutdown -L';//登出
-        exec(winLockCommand);
-      }
-    });
-  };
-  questBorrowingTime();
-  var raiseHands = setInterval(questBorrowingTime,15000);
-  // var raiseHands = setInterval(questBorrowingTime,60000);
+  registered();
+  // mainpress();
+  username().then(username => {
+    console.log(username);
+    stuName = username;
+    document.querySelector('#username').innerHTML = '使用者名稱：' + username;
+    questBorrowingTime();
+    // => 'sindresorhus'
+  });
+  // var raiseHands = setInterval(questBorrowingTime,15000);
+  var raiseHands = setInterval(questBorrowingTime, defParamet.reqFreq);//詢問頻率
 
   $('#logout').click(function () {
     var winLockCommand = 'shutdown -L';//登出
@@ -300,16 +345,28 @@ $(document).ready(function(){
     // var winLockCommand = 'shutdown -r -t 12';//reboot
     exec(winLockCommand);
   });
+  window.onbeforeunload = function() {
+    //視窗關閉
+    sendBroken();
+   };
 });
 
-// const dialog = require('electron').dialog;
+// const ipc = require('electron').ipcRenderer
+
+// ipc.on('will-quit', function (event, path) {
+//   alert('hello');
+//   var winLockCommand = 'shutdown -L';//登出
+//   // // var winLockCommand = 'shutdown -r -t 12';//reboot
+//   exec(winLockCommand);
+// });
+
 // console.log(dialog.showOpenDialog({ properties: [ 'openFile', 'openDirectory', 'multiSelections' ]}));
 // const {dialog} = require('electron').remote
 // console.log(dialog)
 //item title
-
 document.querySelector('#remind').innerHTML =  '請將本視窗縮小';
 document.querySelector('#screen').innerHTML =  '借用時間: 確認中...';
 document.querySelector('#endtime').innerHTML =  '剩餘時間: 確認中...';
+// document.querySelector('#username').innerHTML = '使用者名稱：' + os.hostname();
 // document.querySelector('#setErrorMsg').innerHTML =  versionString;
 

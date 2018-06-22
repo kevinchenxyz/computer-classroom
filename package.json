@@ -2,7 +2,7 @@
   "name": "computer-classroom",
   "productName": "computer_classroom",
   "description": "controller computer",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "wininfo<steps>",
   "copyright": "© 2017, Gumby inc.",
   "homepage": "http://example.com",
@@ -46,6 +46,7 @@
     "electron-windows-notifications": "^2.1.1",
     "fs-jetpack": "^1.0.0",
     "node-powershell": "^3.3.1",
+    "request": "^2.87.0",
     "username": "^3.0.0"
   },
   "devDependencies": {

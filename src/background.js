@@ -9,6 +9,7 @@ import createWindow from './helpers/window';
 // import zmq from 'zmq';
 
 import env from './env';
+import { getConfig, formatMacaddress } from './conf.js';
 
 const {exec} = require('child_process');
 
@@ -30,6 +31,8 @@ if (env.name !== 'production') {
 
 
 let appIcon = null;
+
+
 // import my_image from '../build/icon.ico'; //relative path to image
 // const image = require('./build/icon.ico')
 // const image = clipboard.readImage();
@@ -43,34 +46,48 @@ let appIcon = null;
 // });
 
 app.on('ready', () => {
-
   //開機執行工作排程
-  var AutoLaunch = require('auto-launch');
+  // var AutoLaunch = require('auto-launch');
  
-  var minecraftAutoLauncher = new AutoLaunch({
-      name: 'computer_classroom',
-      // path: process.execPath,
-  });
+  // var minecraftAutoLauncher = new AutoLaunch({
+  //     name: 'computer_classroom',
+  //     // path: process.execPath,
+  // });
+
+  // minecraftAutoLauncher.enable();
+  // //minecraftAutoLauncher.disable();
   
-  minecraftAutoLauncher.enable();
-  //minecraftAutoLauncher.disable();
-  
-  minecraftAutoLauncher.isEnabled()
-  .then(function(isEnabled){
-      if(isEnabled){
-          return;
-      }
-      minecraftAutoLauncher.enable();
-  })
-  .catch(function(err){
-      // handle error
-  });
+  // minecraftAutoLauncher.isEnabled()
+  // .then(function(isEnabled){
+  //     if(isEnabled){
+  //         return;
+  //     }
+  //     minecraftAutoLauncher.enable();
+  // })
+  // .catch(function(err){
+  //     // handle error
+  // });
+
   // const fs = require('fs');
   // if(!fs.existsSync('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\computer_classroom.lnk')){
   //   //將捷徑放入工作排程
   //   exec('cd %UserProfile% && cd ../Public && copy /Y Desktop\\computer_classroom.lnk "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp"', function(error, stdout, stderr){
   //   });
   // }
+
+  //未更改路徑
+  const fs = require('fs');
+  if(!fs.existsSync('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\computer_classroom.lnk')){
+    //將捷徑放入工作排程
+    exec('cd %UserProfile% && cd ../Public && copy /Y Desktop\\computer_classroom.lnk "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp"', function(error, stdout, stderr){
+    });
+  }
+  if(fs.existsSync('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\computer_classroom.lnk')){
+    //將捷徑放入工作排程
+    fs.unlink('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\computer_classroom.lnk');
+  }
+
+  
   // }
   //快捷見註冊
   // const dialog = require('electron').dialog;
@@ -83,6 +100,7 @@ app.on('ready', () => {
   //     buttons: ['好的']
   //   });
   // });
+  
 
   // autoUpdater.checkForUpdates();
   // setApplicationMenu();
@@ -91,11 +109,13 @@ app.on('ready', () => {
   const nativeImage = require('electron').nativeImage;
   var imageIcon = nativeImage.createFromPath(__dirname + "/images/icon.ico");
   appIcon = new Tray(imageIcon)
-  appIcon.setToolTip('電腦教室管理, V0.0.2');//右下方icon顯示版號
+  appIcon.setToolTip('電腦教室管理, V0.0.3');//右下方icon顯示版號
 
   let win = new BrowserWindow({
-    width: 350, 
-    height: 200, 
+    width: 850, 
+    height: 600, 
+    // width: 400, 
+    // height: 200, 
     frame: true,
     x:0,
     y:0,
@@ -109,7 +129,7 @@ app.on('ready', () => {
     protocol: 'file:',
     slashes: true,
   }));
-  // win.openDevTools();
+  win.openDevTools();
   win.show();
   // mainWindow.loadURL(url.format({
   //   pathname: path.join(__dirname, 'app.html'),
@@ -122,6 +142,12 @@ app.on('ready', () => {
 app.on('window-all-closed', () => {
   // app.quit();
   var winLockCommand = 'shutdown -L';//登出
-  // var winLockCommand = 'shutdown -r -t 12';//reboot
+  // // var winLockCommand = 'shutdown -r -t 12';//reboot
+  exec(winLockCommand);
+});
+app.on('will-quit', () => {
+  // app.quit();
+  var winLockCommand = 'shutdown -L';//登出
+  // // var winLockCommand = 'shutdown -r -t 12';//reboot
   exec(winLockCommand);
 });

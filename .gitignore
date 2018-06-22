@@ -4,4 +4,5 @@
 /.sass-cache
 /bower_components
 /test
-.package-lock.json
+/package-lock.json
+/app/*.js
