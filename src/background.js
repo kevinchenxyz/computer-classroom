@@ -1,4 +1,3 @@
-
 import path from 'path';
 import url from 'url';
 import { app, Menu , Tray, BrowserWindow, ipcMain, dialog} from 'electron';
@@ -28,7 +27,6 @@ if (env.name !== 'production') {
   const userDataPath = app.getPath('userData');
   app.setPath('userData', `${userDataPath} (${env.name})`);
 }
-
 
 let appIcon = null;
 
@@ -68,12 +66,6 @@ app.on('ready', () => {
   //     // handle error
   // });
 
-  // const fs = require('fs');
-  // if(!fs.existsSync('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\computer_classroom.lnk')){
-  //   //將捷徑放入工作排程
-  //   exec('cd %UserProfile% && cd ../Public && copy /Y Desktop\\computer_classroom.lnk "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp"', function(error, stdout, stderr){
-  //   });
-  // }
 
   //未更改路徑
   const fs = require('fs');
@@ -88,19 +80,6 @@ app.on('ready', () => {
   }
 
   
-  // }
-  //快捷見註冊
-  // const dialog = require('electron').dialog;
-  // const globalShortcut = require('electron').globalShortcut;
-  // globalShortcut.register('CommandOrControl+Shift+Esc', function () {
-  //   dialog.showMessageBox({
-  //     type: 'info',
-  //     message: '成功!',
-  //     detail: '你按下了一个全局注册的快捷键绑定.',
-  //     buttons: ['好的']
-  //   });
-  // });
-  
 
   // autoUpdater.checkForUpdates();
   // setApplicationMenu();
@@ -109,45 +88,40 @@ app.on('ready', () => {
   const nativeImage = require('electron').nativeImage;
   var imageIcon = nativeImage.createFromPath(__dirname + "/images/icon.ico");
   appIcon = new Tray(imageIcon)
-  appIcon.setToolTip('電腦教室管理, V0.0.3');//右下方icon顯示版號
+  appIcon.setToolTip('電腦教室管理, V1.0.153');//右下方icon顯示版號
 
   let win = new BrowserWindow({
     width: 850, 
     height: 600, 
-    // width: 400, 
-    // height: 200, 
-    frame: true,
-    x:0,
-    y:0,
-    title: '電腦教室借用管理',
+    frame: true, //上方選單tool
+    fullscreen: true,
+    title: '文藻電腦教室-登入',
     autoHideMenuBar: true,
-    closable: false, //視窗不可手動關閉(按X沒動作)
+    type: 'desktop',
+    // closable: false, //視窗不可手動關閉(按X沒c動作)
   });
-
   win.loadURL(url.format({
     pathname: path.join(__dirname, 'app.html'),
     protocol: 'file:',
     slashes: true,
   }));
-  win.openDevTools();
+  // win.openDevTools();
   win.show();
-  // mainWindow.loadURL(url.format({
-  //   pathname: path.join(__dirname, 'app.html'),
-  //   protocol: 'file:',
-  //   slashes: true,
-  // }));
-    // mainWindow.openDevTools();
 });
 
 app.on('window-all-closed', () => {
   // app.quit();
-  var winLockCommand = 'shutdown -L';//登出
-  // // var winLockCommand = 'shutdown -r -t 12';//reboot
-  exec(winLockCommand);
+  // var winLockCommand = 'shutdown -L';//登出
+  // var winLockCommand = 'shutdown -r -t 12';//reboot
+  // exec(winLockCommand);
+  app.quit();
 });
 app.on('will-quit', () => {
   // app.quit();
-  var winLockCommand = 'shutdown -L';//登出
+  // var winLockCommand = 'shutdown -L';//登出
+  // var winLockCommand =  'rundll32.exe user32.dll, LockWorkStation';//鎖 螢幕
   // // var winLockCommand = 'shutdown -r -t 12';//reboot
-  exec(winLockCommand);
+  // exec(winLockCommand);
+  var resurrection = '"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\computer_classroom.lnk"';//bat
+  exec(resurrection);//復活自己
 });

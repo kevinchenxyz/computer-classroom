@@ -7,11 +7,8 @@ html, body {
 
 body {
   display: flex;
-  // justify-content: center;
-  // align-items: center;
   font-family: sans-serif;
   color: #525252;
-  // padding-top: 2em;
 }
 
 a {
@@ -26,9 +23,11 @@ a {
   text-align: left;
   margin-top: 1rem;
 }
-#remind, .errormsg {
+#remind, #errormsg {
   color: red;
   text-align: center;
+  font-size: 1.2em;
+  font-weight: 900;
 }
 #remindEndMsg {
   color: orangered;
@@ -43,4 +42,51 @@ pre {
 }
 #loading {
   text-align: center;
+}
+
+
+body#apphtml::before{
+  background: url('images/wzubg.JPG') no-repeat;
+  background-size: cover;
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: -1;/*-1 可以當背景*/
+  -webkit-filter: blur(3px);
+  filter: blur(3px);
+}
+
+
+.loginInputdiv {
+  margin-bottom: 3rem;
+  margin-top: 3rem;
+}
+
+.loginbtndiv {
+  text-align: center;
+}
+
+.icondiv {
+  margin-top: 15rem;
+  text-align: center;
+  img {
+    width: 14rem,
+  }
+}
+
+#username, #screen, #endtime {
+  // background-color: rgba(200, 200, 200, 0.2);
+  color: #000;
+  font-size: 1.2em;
+}
+
+#rule {
+  background-color: rgba(40, 40, 40, 0.7);
+  border-radius: 8px;
+  padding: 2rem;
+  margin-top: 2rem;
+  color: #fff;
 }

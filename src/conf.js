@@ -13,13 +13,11 @@ export const formatMacaddress = function (ipobj) {
     var rtdata='';
     Object.keys(ipobj).forEach(function (ifname) {
       var alias = 0;
-    
       ipobj[ifname].forEach(function (iface) {
         if ('IPv4' !== iface.family || iface.internal !== false) {
           // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
           return;
         }
-    
         if (alias >= 1) {
           // this single interface has multiple ipv4 addresses
           rtdata += iface.mac;
@@ -33,7 +31,15 @@ export const formatMacaddress = function (ipobj) {
       });
     });
     return rtdata;
-  }
+}
+
+export const secretConf = () => {
+    const adminData = {
+        'account':  'wzuAdmin',
+        'pwd': 'wzu76000424'
+    }
+    return adminData;
+};
 
 // export const Language_en_us = {
 //     'title': 'Information About Your Computer',
