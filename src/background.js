@@ -1,6 +1,6 @@
 import path from 'path';
 import url from 'url';
-import { app, Menu , Tray, BrowserWindow, ipcMain, dialog} from 'electron';
+import { app, Menu , Tray, BrowserWindow, ipcMain} from 'electron';
 import { devMenuTemplate } from './menu/dev_menu_template';
 import { editMenuTemplate } from './menu/edit_menu_template';
 import { aboutMenuTemplate } from './menu/about_menu_template.js';
@@ -68,16 +68,16 @@ app.on('ready', () => {
 
 
   //未更改路徑
-  const fs = require('fs');
-  if(!fs.existsSync('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\computer_classroom.lnk')){
-    //將捷徑放入工作排程
-    exec('cd %UserProfile% && cd ../Public && copy /Y Desktop\\computer_classroom.lnk "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp"', function(error, stdout, stderr){
-    });
-  }
-  if(fs.existsSync('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\computer_classroom.lnk')){
-    //將捷徑放入工作排程
-    fs.unlink('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\computer_classroom.lnk');
-  }
+  // const fs = require('fs');
+  // if(!fs.existsSync('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\computer_classroom.lnk')){
+  //   //將捷徑放入工作排程
+  //   exec('cd %UserProfile% && cd ../Public && copy /Y Desktop\\computer_classroom.lnk "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp"', function(error, stdout, stderr){
+  //   });
+  // }
+  // if(fs.existsSync('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\computer_classroom.lnk')){
+  //   //將捷徑放入工作排程
+  //   fs.unlink('C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\computer_classroom.lnk');
+  // }
 
   
 
@@ -87,12 +87,12 @@ app.on('ready', () => {
   //set taskbar
   const nativeImage = require('electron').nativeImage;
   var imageIcon = nativeImage.createFromPath(__dirname + "/images/icon.ico");
-  appIcon = new Tray(imageIcon)
-  appIcon.setToolTip('電腦教室管理, V1.0.153');//右下方icon顯示版號
+  appIcon = new Tray(imageIcon);
+  appIcon.setToolTip('電腦教室管理, V1.8.14');//右下方icon顯示版號
 
   let win = new BrowserWindow({
-    width: 850, 
-    height: 600, 
+    width: 850,
+    height: 600,
     frame: true, //上方選單tool
     fullscreen: true,
     title: '文藻電腦教室-登入',
@@ -106,17 +106,18 @@ app.on('ready', () => {
     slashes: true,
   }));
   // win.openDevTools();
+
   win.show();
 });
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', function () {
   // app.quit();
   // var winLockCommand = 'shutdown -L';//登出
   // var winLockCommand = 'shutdown -r -t 12';//reboot
   // exec(winLockCommand);
   app.quit();
 });
-app.on('will-quit', () => {
+app.on('will-quit', function () {
   // app.quit();
   // var winLockCommand = 'shutdown -L';//登出
   // var winLockCommand =  'rundll32.exe user32.dll, LockWorkStation';//鎖 螢幕

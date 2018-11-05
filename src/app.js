@@ -7,7 +7,7 @@ import './helpers/external_links.js';
 // All stuff below is just to show you how it works. You can delete all of it.
 import path from 'path';
 import url from 'url';
-import { app, BrowserWindow, remote, screen} from 'electron';
+import { app, BrowserWindow, remote, screen, dialog} from 'electron';
 import jetpack from 'fs-jetpack';
 import { greet } from './hello_world/hello_world';
 import { Language_zh_tw } from './language/zh_tw';
@@ -28,6 +28,8 @@ var screenElectron = electron.screen;
 var mainScreen = screenElectron.getPrimaryDisplay();
 var dimensions = mainScreen.size;
 
+// dialog.showErrorBox()
+// dialog.showErrorBox('測試','內容');
 
 var adminconf = secretConf();
 // console.log(adminconf);
@@ -36,6 +38,7 @@ var adminconf = secretConf();
 
 const Config = require('electron-config');
 var config = new Config();
+var raiseHands; // 輪尋用參數
 
 const powerShell = require('node-powershell');
 
@@ -73,9 +76,9 @@ switch (language_code) {
 }
 // console.log(os.networkInterfaces().eth0.address);
 
-
+var defParamet;
 var useDefParamet = () => {
-  var defParamet = {
+  defParamet = {
     reqFreq: 60000, //詢問頻率,預設60秒(60000)
     noBorrow: 15000, //未借用踢出時間
     faultTolerantErrMsg: 3,//終端請求失敗幾次彈出錯誤訊息。
@@ -83,6 +86,8 @@ var useDefParamet = () => {
     bufferTime:60000, //借用結束緩衝時間,
     advanceWarningTime: 10 ,//提前提醒時間(分)
     advanceWarningFreq: 3, // 提前提醒頻率(分)
+    renewTime: 10,  // 開放續借時間(分)
+    renewStopTime: 3 // 續借停止時間(分)
   };
   config.set('defParamet', defParamet);
 };
@@ -128,7 +133,7 @@ var registered = function () {
             computer_mac: formatMacaddress(os.networkInterfaces()),
           };
       console.log(sendData);
-      
+
       sendData = JSON.stringify(sendData);
       $.ajax({
         method: "POST",
@@ -147,7 +152,12 @@ var registered = function () {
 
 async function asyncRegistered(account, pwd) {
   const data = await registered();
-  const regCheck = data.update_status;
+  var  regCheck ;
+  if(data !== false) {
+    regCheck = data.update_status;
+  } else {
+    regCheck = data;
+  }
   console.log(data);
   document.querySelector('#rule').innerHTML =  data.term;
   if (regCheck) {
@@ -157,6 +167,12 @@ async function asyncRegistered(account, pwd) {
     } else {
       useDefParamet();
     }
+    var defParamet = config.get('defParamet');
+    const reqFreq = Number(defParamet.reqFreq);
+    console.log(reqFreq);
+    raiseHands = setInterval( () => { // 輪詢
+      questBorrowingTime();
+    } , reqFreq);
   } else {
     seterrormsg(0);//系統錯誤
     useDefParamet();//參數使用預設值
@@ -196,6 +212,7 @@ var sendBroken = function () { // 回報故障
     });
 };
 
+var endMinCount = 0;
 var questBorrowingTime = function () {
   var recheckPath = getConfig().path.computerClassroom;
   var sendData = {
@@ -203,7 +220,7 @@ var questBorrowingTime = function () {
     user_uid: 'wait',
     computer_mac: formatMacaddress(os.networkInterfaces()),
   };
-  // console.log(sendData);
+  console.log(sendData);
   sendData = JSON.stringify(sendData);
   $.ajax({
     method: "POST",
@@ -216,7 +233,19 @@ var questBorrowingTime = function () {
     console.log(data);
   })
   .fail(function( msg ) {
-    // console.log('fail');
+    console.log('fail');
+    console.log(defParamet);
+    console.log(msg);
+    if (endMinCount >= Number(defParamet.faultTolerantErrMsg)) {
+      seterrormsg(0);//系統錯誤
+    }
+    if (endMinCount === Number(defParamet.faultTolerant)) {
+      //超過三次詢問皆斷線 
+      var winLockCommand = 'shutdown -r -t 5';// 重開機
+      // var winLockCommand = 'shutdown -L';//登出
+      exec(winLockCommand);
+    }
+    endMinCount += 1;
   });
 };
 
@@ -237,6 +266,7 @@ var seterrormsg = function (type) {
       title:'error',
       frame: true,
       autoHideMenuBar: true,
+      alwaysOnTop:true, // 視窗置頂
     });
     winindex.loadURL(url.format({
       pathname: path.join(__dirname, filename[type]),
@@ -265,10 +295,10 @@ var openInformationPage = () => {
       protocol: 'file:',
       slashes: true,
     }));
-    InformationPage.on('closed', () => {
-      var resurrection = '"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\computer_classroom.lnk"';//bat
-      exec(resurrection);//復活自己
-    });
+    // InformationPage.on('closed', function () {
+    //   var resurrection = '"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\computer_classroom.lnk"';//bat
+    //   exec(resurrection);//復活自己
+    // });
     // InformationPage.openDevTools();
 };
 
@@ -309,13 +339,13 @@ var userLogin = ( account, pwd ) => {
 
 var tyrLoginCount = 0;
 async function asyncUserLogin(account, pwd) {
-  const loginCheck = await userLogin(account, pwd);
-  if(account === adminconf.account && pwd === adminconf.pwd ) {
+  var loginCheck = await userLogin(account, pwd);
+  if(account === adminconf.account && pwd === adminconf.pwd ) { //testcode-hide
     loginCheck.login_status = true; // SecretDoor
   }
   // const login_status = loginCheck.login_status;
   const message = loginCheck.message;
-  if (loginCheck === 'connectError'){
+  if (loginCheck === 'connectError') {
     $("#errormsg").fadeIn("slow");
     document.querySelector('#errormsg').innerHTML = "伺服器連線錯誤，請聯繫管理人員處理！";
   } else if( loginCheck.login_status ) {
@@ -342,20 +372,24 @@ async function asyncUserLogin(account, pwd) {
   }
 }
 
-var raiseHands; // 輪尋用參數
-$(document).ready(function(){  
-  asyncRegistered();//註冊
-  useDefParamet();// test code
-  var defParamet = config.get('defParamet');
 
-  raiseHands = setInterval( () => {
-    questBorrowingTime();
-  } , Number(defParamet.reqFreq));// 輪詢
+$(document).ready(function(){
+  asyncRegistered();//註冊
+  // useDefParamet();// test code
+  
+  // defParamet.reqFreq = 10000; //test
+  $(document).keypress(function(e) {
+      var keycode = (e.keyCode ? e.keyCode : e.which);
+      if (keycode == '13') {
+        var account = document.querySelector('#account').value;
+        var pwd = document.querySelector('#pwd').value;
+        asyncUserLogin(account, pwd);
+      }
+  });
 
   $('#login').click(function () {
-    console.log('login');
-    const account = document.querySelector('#account').value;
-    const pwd = document.querySelector('#pwd').value;
+    var account = document.querySelector('#account').value;
+    var pwd = document.querySelector('#pwd').value;
     asyncUserLogin(account, pwd);
   });
 

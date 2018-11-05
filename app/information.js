@@ -1,16 +1,71 @@
+(function () {'use strict';
 
-import { getConfig, secretConf, formatMacaddress } from './conf.js';
-import path from 'path';
-import url from 'url';
-import { app, BrowserWindow, remote, screen, dialog} from 'electron';
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var path = _interopDefault(require('path'));
+var url = _interopDefault(require('url'));
+require('electron');
+
+const getConfig = () => {
+    const confData = {
+        'path': {
+            // computerClassroom: "http://192.168.1.59/zf2/kurogo_wzu_push/public/api/computer"
+            computerClassroom: "http://192.168.1.207/push/api/computer"
+            // computerClassroom: "http://140.127.170.153/push/api/computer"
+            // computerClassroom: "http://140.127.170.14/push/api/computer"
+        }
+    };
+    return confData;
+};
+
+const formatMacaddress = function (ipobj) {
+    var rtdata='';
+    Object.keys(ipobj).forEach(function (ifname) {
+      var alias = 0;
+      ipobj[ifname].forEach(function (iface) {
+        if ('IPv4' !== iface.family || iface.internal !== false) {
+          // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+          return;
+        }
+        if (alias >= 1) {
+          // this single interface has multiple ipv4 addresses
+          rtdata += iface.mac;
+          // console.log(ifname + ':' + alias, iface.address);
+        } else {
+          // this interface has only one ipv4 adress
+          // console.log(ifname, iface.address);
+          rtdata += iface.mac;
+        }
+        ++alias;
+      });
+    });
+    return rtdata;
+};
+
+const secretConf = () => {
+    const adminData = {
+        'account':  'wzuadmin',
+        'pwd': 'wzu073426031'
+    };
+    return adminData;
+};
 
 
+// export const Language_en_us = {
+//     'title': 'Information About Your Computer',
+//     'ip_address': 'IP Address',
+//     'mac_address': 'MAC Address',
+//     'computer_name': 'Computer Name',
+//     'memory': 'Memory',
+//     'screen_resolution': 'Screen Resolution',
+//     'windows_version': 'Windows Version',
+//     'cpu': 'CPU',
+//     'hotfix': 'HotFix Imformations',
+// };
 
 const os = require('os');
 
 const {exec} = require('child_process');
-
-var registeredPath = getConfig().path.computerClassroom;
 
 const Config = require('electron-config');// 設定參數
 var config = new Config();
@@ -28,8 +83,8 @@ var seterrormsg = function (type) {
     'stopError.html',//停借用的錯誤
     'stopeRecheck.html',//停借用的二次確認
   ];
-  const BrowserWindow = require('electron').remote.BrowserWindow;
-    var winindex = new BrowserWindow({
+  const BrowserWindow$$1 = require('electron').remote.BrowserWindow;
+    var winindex = new BrowserWindow$$1({
       width: 550,
       height: 100, 
       title:'error',
@@ -145,6 +200,8 @@ var questBorrowingTime = function (account) {
       //   exec(winLockCommand);
       // }
       if( account !== adminconf.account) {
+        console.log('借用狀態錯誤重開 ');
+
         seterrormsg(0);
         setTimeout( function () {
           // var winLockCommand = 'shutdown -L';//登出
@@ -165,6 +222,7 @@ var questBorrowingTime = function (account) {
     }
     if (endMinCount === Number(defParamet.faultTolerant)) {
       //超過三次詢問皆斷線 
+      console.log('超過三次詢問皆斷線');
       var winLockCommand = 'shutdown -r -t 5';// 重開機
       // var winLockCommand = 'shutdown -L';//登出
       exec(winLockCommand);
@@ -174,43 +232,6 @@ var questBorrowingTime = function (account) {
 };
 
 var logoutCount = false; // 停止借用確認
-// var resetLogoutCount = () => { // 重設確認變數
-//   setTimeout( () => {
-//     $('#logout').removeClass('btn-danger');
-//     $('#logout').addClass('btn-primary');
-//     logoutCount = false;    
-//   }, 10000);
-// };
-
-var sendLogout = () => {
-    // 停止借用+登出
-    var registeredPath = getConfig().path.computerClassroom;
-    var sendData = {
-          action: 'register',
-          // computer_id: Number(numberval),
-          computer_mac: formatMacaddress(os.networkInterfaces()),
-        };
-    console.log(sendData);
-    
-    sendData = JSON.stringify(sendData);
-    $.ajax({
-      method: "POST",
-      url: registeredPath,
-      data: sendData,
-      contentType: 'application/json; charset=utf-8',
-    })
-    .done(function( data ) {
-      if(data.update_status){
-        console.log('註冊完成!');
-      }else{
-        seterrormsg(0);//系統錯誤
-      }
-    })
-    .fail(function( msg ) {
-      seterrormsg(0);//系統錯誤
-    });
-}
-
 var renew = (account) => {
   // 續借
   var loan_id = config.get('loan_id');
@@ -249,7 +270,7 @@ var renew = (account) => {
     seterrormsg(0);
     // window.alert('系統錯誤，請聯絡管理人員','續借失敗！');
   });
-}
+};
 
 var stopUse = () => {
   var loan_id = config.get('loan_id');
@@ -360,3 +381,6 @@ $(document).ready(function(){
   document.querySelector('#remind').innerHTML =  '請將本視窗縮小';
   document.querySelector('#username').innerHTML =  '使用者(Account)：' + account;
 });
+
+}());
+//# sourceMappingURL=information.js.map

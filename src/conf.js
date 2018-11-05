@@ -3,9 +3,10 @@ export const getConfig = () => {
         'path': {
             // computerClassroom: "http://192.168.1.59/zf2/kurogo_wzu_push/public/api/computer"
             // computerClassroom: "http://192.168.1.207/push/api/computer"
-            computerClassroom: "http://140.127.170.153/push/api/computer"
+            // computerClassroom: "http://140.127.170.153/push/api/computer"
+            computerClassroom: "http://140.127.170.14/push/api/computer"
         }
-    }
+    };
     return confData;
 };
 
@@ -35,11 +36,12 @@ export const formatMacaddress = function (ipobj) {
 
 export const secretConf = () => {
     const adminData = {
-        'account':  'wzuAdmin',
-        'pwd': 'wzu76000424'
+        'account':  'wzuadmin',
+        'pwd': 'wzu073426031'
     }
     return adminData;
 };
+
 
 // export const Language_en_us = {
 //     'title': 'Information About Your Computer',

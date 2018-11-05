@@ -1,7 +1,7 @@
 export const aboutMenuTemplate = {
     label: 'about',
     submenu: [
-      { label: 'Version 0.2.3', accelerator: '0.2.3'},
+      { label: 'Version 1.4.14', accelerator: '1.4.14'},
     ],
   };
   

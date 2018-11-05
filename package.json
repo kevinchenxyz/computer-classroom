@@ -2,7 +2,7 @@
   "name": "computer-classroom",
   "productName": "computer_classroom",
   "description": "controller computer",
-  "version": "1.0.153",
+  "version": "1.8.14",
   "author": "wininfo<steps>",
   "copyright": "© 2017, Gumby inc.",
   "homepage": "http://example.com",
@@ -22,6 +22,7 @@
       }
     ],
     "nsis": {
+      "oneClick": true,
       "perMachine": true,
       "createDesktopShortcut": true
     }

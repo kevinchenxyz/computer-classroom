@@ -6,11 +6,14 @@ html, body {
 }
 
 body {
+  
   display: flex;
   font-family: sans-serif;
   color: #525252;
 }
-
+body#apphtml {
+  background: linear-gradient(to bottom,#C9C9CA,#CfCfCf);
+}
 a {
   text-decoration: none;
 }
@@ -44,20 +47,20 @@ pre {
   text-align: center;
 }
 
-
-body#apphtml::before{
-  background: url('images/wzubg.JPG') no-repeat;
-  background-size: cover;
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  z-index: -1;/*-1 可以當背景*/
-  -webkit-filter: blur(3px);
-  filter: blur(3px);
-}
+// body#apphtml::before{
+//   // background: url('images/wzubg2.jpg') no-repeat;
+//   background: linear-gradient(to bottom,#C9C9CA,#CfCfCf);
+//   background-size: cover;
+//   content: "";
+//   position: absolute;
+//   width: 100%;
+//   height: 100%;
+//   top: 0;
+//   left: 0;
+//   z-index: -1;/*-1 可以當背景*/
+//   -webkit-filter: blur(3px);
+//   filter: blur(3px);
+// }
 
 
 .loginInputdiv {
@@ -84,9 +87,23 @@ body#apphtml::before{
 }
 
 #rule {
-  background-color: rgba(40, 40, 40, 0.7);
+  background-color: rgba(80, 80, 80, 0.7);
   border-radius: 8px;
   padding: 2rem;
   margin-top: 2rem;
   color: #fff;
+}
+
+#renewBtn{
+  display: none;
+}
+
+#keep {
+  display: none;
+}
+
+#renewmsg {
+  margin-top:0.5em;
+  margin-bottom:0.5em;
+  color:red;
 }
